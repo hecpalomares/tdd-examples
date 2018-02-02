@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Form Validation TDD</title>
+		<style src="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.css"></style>
+	</head>
+	<body>
+		<div id="mocha"></div>
+
+		<form class="test-form">
+		    <input name="first-name" type="text" data-validation="alphabetical" />
+		    <input name="age" type="text" data-validation="numeric" />
+		</form>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/mocha/3.2.0/mocha.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/chai/3.5.0/chai.min.js"></script>
+		<script src="tests.js"></script>
+	</body>
+</html>
+
