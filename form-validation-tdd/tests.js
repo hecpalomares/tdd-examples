@@ -39,9 +39,11 @@
             it('should validate a form with all of the possible validation types', function() {
                 const name = form.querySelector('input[name="first-name"]');
                 const age = form.querySelector('input[name="age"]');
+                const id = form.querySelector('input[name="id"]');
 
                 name.value = "Hector";
                 age.value = 25;
+                id.value = 'RZT0123UI';
             
                 const result = validateForm(form);
                 expect(result.isValid).to.be.true;
