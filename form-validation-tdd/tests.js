@@ -2,40 +2,46 @@
     'use strict';
     
     // Implementation of core functionality
+    function createValidationQueries (inputs) {
+        console.log(inputs);
+        return Array.from(inputs).map(input => ({
+            name: input.name,
+            type: input.dataset.validation,
+            value: input.value
+        }));
+    }
+
     function validateForm(form) {
         const result = {
-            get isValid() {
-                return this.errors.length === 0;    // Setting getter to return if a form isValid if there errors array is equal to 0.
-            },
             errors: []
         };
 
-        const inputs = Array.from(form.querySelectorAll('input'));
+        let isValid = true;
 
-        for(let input of inputs) {
-            if(input.dataset.validation === 'alphabetical') {
-                let isValid = /^[a-z]+$/i.test(input.value);
+        let validations = createValidationQueries(form.querySelectorAll('input'));
 
-                if (!isValid) {
-                    result.errors.push(new Error(`${input.value} is not a valid ${input.name} value`)); // If data input is not valid, push a new Error into the array
-                }
-
-            } else if (input.dataset.validation === 'numeric') {
-                let isValid = /^[0-9]+$/.test(input.value);
+        for (let validation of createValidationQueries(form.querySelectorAll('input'))) {
+            if (validation.type === 'alphabetical') {     
+                isValid = isValid && /^[a-z]+$/i.test(validation.value);
 
                 if (!isValid) {
-                    result.errors.push(new Error(`${input.value} is not a valid ${input.name} value`)); // If data input is not valid, push a new Error into the array
+                    result.errors.push(new Error(`${validation.value} is not a valid ${validation.name} value`));
                 }
-
-            } else if (input.dataset.validation === 'alphanumeric') {
-                let isValid = /^\w+$/.test(input.value);
+            } else if (validation.type === 'numeric') {
+                isValid = isValid && /^[0-9]+$/.test(validation.value);
 
                 if (!isValid) {
-                    result.errors.push(new Error(`${input.value} is not a valid ${input.name} value`)); // If data input is not valid, push a new Error into the array
+                    result.errors.push(new Error(`${validation.value} is not a valid ${validation.name} value`));
                 }
-            } 
+            } else if (validation.type === 'alphanumeric') {
+                isValid = isValid && /^[\w]+$/.test(validation.value);
+
+                if (!isValid) {
+                    result.errors.push(new Error(`${validation.value} is not a valid ${validation.name} value`));
+                }
+            }
         }
-
+        result.isValid = isValid;
         return result;
     }
     
@@ -43,12 +49,40 @@
     mocha.setup('bdd');
     const { expect } = chai;
     
-    describe('the form validator', function () {
+    describe('Validation our Forms', function () {
         let form;
         
         beforeEach(function () {
             form = document.querySelector('.test-form').cloneNode(true);
         });
+
+        describe('the createValidationQueries function', function() {
+            it('should map input elements with a data-validation attribute to an array of validation objects', function() {
+                const name = form.querySelector('input[name="first-name"]');
+                const age = form.querySelector('input[name="age"]');
+                const id = form.querySelector('input[name="id"]');
+
+                name.value = "Hector";
+                age.value = 25;
+                id.value = 'RZT0123UI';
+
+                const validations = createValidationQueries([name, age, id]);
+
+                expect(validations.length).to.equal(3);
+
+                expect(validations[0].name).to.equal('first-name');
+                expect(validations[0].type).to.equal('alphabetical');
+                expect(validations[0].value).to.equal('Hector');
+
+                expect(validations[1].name).to.equal('age');
+                expect(validations[1].type).to.equal('numeric');
+                expect(validations[1].value).to.equal('25');
+
+                expect(validations[2].name).to.equal('id');
+                expect(validations[2].type).to.equal('alphanumeric');
+                expect(validations[2].value).to.equal('RZT0123UI');
+            });
+         });
         
         describe('the validateForm function', function () {
             it('should validate a form with all of the possible validation types', function() {
@@ -58,9 +92,10 @@
 
                 name.value = "Hector";
                 age.value = 25;
-                id.value = 'RZT0123UI';
-            
+                id.value = "RZT0123UI";
+
                 const result = validateForm(form);
+
                 expect(result.isValid).to.be.true;
                 expect(result.errors.length).to.equal(0);
             });
