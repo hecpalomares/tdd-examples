@@ -1,6 +1,12 @@
 (function () {
     'use strict';
     
+    const validationRules = new Map([
+                ['alphabetical', /^[a-z]+$/i],
+                ['numeric', /^[0-9]+$/i],
+                ['alphanumeric', /^[\w]+$/i]
+            ]);
+
     // Implementation of core functionality
     function createValidationQueries (inputs) {
         console.log(inputs);
@@ -11,37 +17,36 @@
         }));
     }
 
+    function validateItem(validation, validationRules) {
+        if(!validationRules.has(validation.type)) {
+            return false;
+        }
+
+        return validationRules.get(validation.type).test(validation.value);
+    }
+
     function validateForm(form) {
         const result = {
+            get isValid() {
+                return this.errors.length === 0;
+            },
             errors: []
         };
 
-        let isValid = true;
+       
 
         let validations = createValidationQueries(form.querySelectorAll('input'));
 
         for (let validation of createValidationQueries(form.querySelectorAll('input'))) {
-            if (validation.type === 'alphabetical') {     
-                isValid = isValid && /^[a-z]+$/i.test(validation.value);
+            
+             let isValid = validateItem(validation, validationRules);
 
-                if (!isValid) {
-                    result.errors.push(new Error(`${validation.value} is not a valid ${validation.name} value`));
-                }
-            } else if (validation.type === 'numeric') {
-                isValid = isValid && /^[0-9]+$/.test(validation.value);
-
-                if (!isValid) {
-                    result.errors.push(new Error(`${validation.value} is not a valid ${validation.name} value`));
-                }
-            } else if (validation.type === 'alphanumeric') {
-                isValid = isValid && /^[\w]+$/.test(validation.value);
-
-                if (!isValid) {
-                    result.errors.push(new Error(`${validation.value} is not a valid ${validation.name} value`));
-                }
+            if (!isValid) {
+                result.errors.push(new Error(`${validation.value} is not a valid ${validation.name} value`));
             }
+            
         }
-        result.isValid = isValid;
+        
         return result;
     }
     
@@ -54,6 +59,39 @@
         
         beforeEach(function () {
             form = document.querySelector('.test-form').cloneNode(true);
+        });
+
+        describe('the validateItem function', function() {
+            it('should return true when the passed item is deemed valid against the supplied validation rules', function() {
+                const validation = {
+                    type: 'alphabetical',
+                    value: 'Hector'
+                };
+
+                const isValid = validateItem(validation, validationRules);
+                expect(isValid).to.be.true;
+            });
+
+             it('should return false when the passed item is deemed invalid', function() {
+                const validation = {
+                    type: 'alphabetical',
+                    value: '25'
+                };
+
+                const isValid = validateItem(validation, validationRules);
+                expect(isValid).to.be.false;
+            });
+
+              it('should return false when the validation type is not found', function() {
+                const validation = {
+                    type: 'email',
+                    value: 'Hector'
+                };
+
+                const isValid = validateItem(validation, validationRules);
+                expect(isValid).to.be.false;
+            });
+
         });
 
         describe('the createValidationQueries function', function() {
@@ -148,7 +186,7 @@
                 expect(result.errors[0].message).to.be.equal('%%RZT0!!!123UI$$$ is not a valid id value');
             });
 
-            it('should return multiple errors if more than one field is invalud', function () {
+            it('should return multiple errors if more than one field is invalid', function () {
                 const name = form.querySelector('input[name="first-name"]');
                 const age = form.querySelector('input[name="age"]');
                 const id = form.querySelector('input[name="id"]');
@@ -170,7 +208,6 @@
                 expect(result.errors[2]).to.be.instanceof(Error);
                 expect(result.errors[2].message).to.be.equal('??%%$$ is not a valid id value');
             });
-
 
         });
     });
